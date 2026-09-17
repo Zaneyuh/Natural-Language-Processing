@@ -50,7 +50,6 @@ def send_message(event=None):
 def show_response(response):
     chat.config(state="normal")
 
-    # Remove "Naghunahuna..."
     start = chat.search("Naghunahuna...", "1.0", tk.END)
 
     if start:
@@ -66,14 +65,12 @@ def show_response(response):
     input_box.focus()
 
 
-# WINDOW
 root = tk.Tk()
 root.title("Cebuano Doctor")
 root.geometry("700x600")
 root.configure(bg="#f6f7f9")
 
 
-# HEADER
 header = tk.Frame(root, bg="#f6f7f9")
 header.pack(fill="x", padx=30, pady=(25, 15))
 
@@ -94,7 +91,6 @@ tk.Label(
 ).pack(anchor="w", pady=(4, 0))
 
 
-# INPUT — PACK THIS BEFORE CHAT
 input_frame = tk.Frame(root, bg="#f6f7f9")
 input_frame.pack(side="bottom", fill="x", padx=30, pady=(10, 25))
 
@@ -133,8 +129,6 @@ send_button = tk.Button(
 )
 send_button.pack(side="right", padx=(10, 0))
 
-
-# CHAT
 chat = scrolledtext.ScrolledText(
     root,
     wrap=tk.WORD,
@@ -173,8 +167,6 @@ chat.tag_config(
 
 chat.config(state="disabled")
 
-
-# ENTER = SEND
 input_box.bind("<Return>", send_message)
 
 input_box.focus()
