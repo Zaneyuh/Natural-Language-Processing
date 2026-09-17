@@ -1,68 +1,174 @@
-def translate_to_english(text):
-    return "TEST ENGLISH TRANSLATION"
+import tkinter as tk
+from tkinter import scrolledtext
+import threading
+
+from cebuanodoc_models import (
+    translate_to_english,
+    get_medical_response,
+    translate_to_cebuano,
+)
 
 
-def get_medical_response(text):
-    return "TEST MEDICAL RESPONSE"
+def process_message(query):
+    try:
+        english = translate_to_english(query)
+        medical = get_medical_response(english)
+        cebuano = translate_to_cebuano(medical)
+
+        root.after(0, show_response, cebuano)
+
+    except Exception as e:
+        root.after(0, show_response, f"Error: {e}")
 
 
-def translate_to_cebuano(text):
-    return "TEST CEBUANO RESPONSE"
+def send_message(event=None):
+    query = input_box.get().strip()
+
+    if not query:
+        return
+
+    chat.config(state="normal")
+    chat.insert(tk.END, "Ikaw\n", "user_name")
+    chat.insert(tk.END, query + "\n\n")
+
+    chat.insert(tk.END, "Cebuano Doctor\n", "doctor_name")
+    chat.insert(tk.END, "Naghunahuna...\n\n", "loading")
+
+    chat.config(state="disabled")
+    chat.see(tk.END)
+
+    input_box.delete(0, tk.END)
+    send_button.config(state="disabled")
+
+    threading.Thread(
+        target=process_message,
+        args=(query,),
+        daemon=True
+    ).start()
 
 
-def main():
-    print("====================================")
-    print("          CEBUANO DOCTOR")
-    print("====================================")
-    print("Disclaimer: This chatbot is for educational purposes only.")
-    print("It is not a substitute for professional medical advice.")
+def show_response(response):
+    chat.config(state="normal")
 
-    while True:
-        print("\nEnter a Cebuano healthcare question.")
-        query = input("> ").strip()
+    start = chat.search("Naghunahuna...", "1.0", tk.END)
 
-        if not query:
-            print("Please enter a valid question.")
-            continue
+    if start:
+        end = f"{start}+{len('Naghunahuna...')}c"
+        chat.delete(start, end)
 
-        try:
-            print("\n[1/3] Translating Cebuano to English...")
-            english_query = translate_to_english(query)
+    chat.insert(tk.END, response + "\n\n")
 
-            print("[2/3] Generating medical response...")
-            medical_response = get_medical_response(english_query)
+    chat.config(state="disabled")
+    chat.see(tk.END)
 
-            print("[3/3] Translating response to Cebuano...")
-            cebuano_response = translate_to_cebuano(medical_response)
-
-            print("\n------------------------------------")
-            print("Original Cebuano Question:")
-            print(query)
-
-            print("\n------------------------------------")
-            print("English Translation:")
-            print(english_query)
-
-            print("\n------------------------------------")
-            print("Medical Response:")
-            print(medical_response)
-
-            print("\n------------------------------------")
-            print("Final Cebuano Response:")
-            print(cebuano_response)
-
-            print("------------------------------------")
-
-        except Exception as e:
-            print("\nAn error occurred while processing the request.")
-            print(f"Error: {e}")
-
-        again = input("\nAsk another question? [Y/N]: ").strip()
-
-        if again.lower() != "y":
-            print("\nThank you for using Cebuano Doctor!")
-            break
+    send_button.config(state="normal")
+    input_box.focus()
 
 
-if __name__ == "__main__":
-    main()
+root = tk.Tk()
+root.title("Cebuano Doctor")
+root.geometry("700x600")
+root.configure(bg="#f6f7f9")
+
+
+header = tk.Frame(root, bg="#f6f7f9")
+header.pack(fill="x", padx=30, pady=(25, 15))
+
+tk.Label(
+    header,
+    text="Cebuano Doctor",
+    font=("Segoe UI", 22, "bold"),
+    bg="#f6f7f9",
+    fg="#1f2937"
+).pack(anchor="w")
+
+tk.Label(
+    header,
+    text="Pangutana bahin sa imong panglawas sa Cebuano.",
+    font=("Segoe UI", 10),
+    bg="#f6f7f9",
+    fg="#6b7280"
+).pack(anchor="w", pady=(4, 0))
+
+
+input_frame = tk.Frame(root, bg="#f6f7f9")
+input_frame.pack(side="bottom", fill="x", padx=30, pady=(10, 25))
+
+disclaimer = tk.Label(
+    input_frame,
+    text="Educational use only • Dili kapuli sa tambag sa doktor.",
+    font=("Segoe UI", 8),
+    bg="#f6f7f9",
+    fg="#6b7280"
+)
+disclaimer.pack(anchor="w", pady=(8, 0))
+
+entry_frame = tk.Frame(input_frame, bg="#f6f7f9")
+entry_frame.pack(fill="x")
+
+input_box = tk.Entry(
+    entry_frame,
+    font=("Segoe UI", 11),
+    relief="solid",
+    borderwidth=1
+)
+input_box.pack(
+    side="left",
+    fill="x",
+    expand=True,
+    ipady=9
+)
+
+send_button = tk.Button(
+    entry_frame,
+    text="Send",
+    font=("Segoe UI", 10, "bold"),
+    command=send_message,
+    padx=18,
+    pady=7
+)
+send_button.pack(side="right", padx=(10, 0))
+
+chat = scrolledtext.ScrolledText(
+    root,
+    wrap=tk.WORD,
+    font=("Segoe UI", 11),
+    bg="white",
+    fg="#1f2937",
+    relief="solid",
+    borderwidth=1,
+    padx=15,
+    pady=15
+)
+
+chat.pack(
+    fill="both",
+    expand=True,
+    padx=30,
+    pady=(0, 5)
+)
+
+chat.tag_config(
+    "user_name",
+    font=("Segoe UI", 10, "bold"),
+    foreground="#2563eb"
+)
+
+chat.tag_config(
+    "doctor_name",
+    font=("Segoe UI", 10, "bold"),
+    foreground="#15803d"
+)
+
+chat.tag_config(
+    "loading",
+    foreground="#6b7280"
+)
+
+chat.config(state="disabled")
+
+input_box.bind("<Return>", send_message)
+
+input_box.focus()
+
+root.mainloop()
